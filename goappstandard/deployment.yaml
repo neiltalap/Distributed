@@ -1,0 +1,101 @@
+# 1. The "Public" Config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  DATABASE_URL: "/data/app.db"
+  LOG_LEVEL: "info"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlite-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one node can write to the SQLite file at a time
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName: "standard" # Optional: Specify your cloud's storage class
+---
+# 2. The "Sensitive" Config (Base64 encoded in reality)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+data:
+  API_KEY: "WVpWemRHVmtZbWxqWlRZM05EUT0=" # Example: "secret-key-123"
+---
+# 3. The Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-app-sota
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: goapp
+  template:
+    metadata:
+      labels:
+        app: goapp
+    spec:
+      # Must be > your app's internal timeout (20s + 5s)
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: fiber-app
+        image: abzh423/goappstandard:v1.0.0
+        imagePullPolicy: Always
+
+        # --- RESOURCES ---
+        resources:
+          requests:
+            cpu: "100m"      # 0.1 core
+            memory: "128Mi"
+          limits:
+            cpu: "500m"      # 0.5 core
+            memory: "256Mi"  # Hard ceiling
+        
+        # --- ENV & SECRETS ---
+        env:
+        # Load all keys from the ConfigMap as Env Vars
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DATABASE_URL
+        # Load specific key from Secret
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: API_KEY
+
+        # Purely informational
+        ports:
+        - containerPort: 8080
+
+        # --- PROBES ---
+        startupProbe:
+          httpGet: { path: /health/startupz, port: 8080 }
+          failureThreshold: 30
+          periodSeconds: 1
+        livenessProbe:
+          httpGet: { path: /health/liveness, port: 8080 }
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: { path: /readiness, port: 8080 }
+          periodSeconds: 5
+        
+        volumeMounts:
+        - name: sqlite-data
+          mountPath: /data
+      volumes:
+      - name: sqlite-data
+        persistentVolumeClaim:
+          claimName: sqlite-pvc
+
+              

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: rs-1
+spec:
+  replicas: 3
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - netshoot-rc
+  template:
+    metadata:
+      labels:
+        app: netshoot-rc
+    spec:
+      containers:
+      - name: netshoot
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "infinity"]
+        ports:
+        - containerPort: 8080

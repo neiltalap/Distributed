@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: rc-controller-a 
+spec:
+  replicas: 3
+  selector:
+    app: netshoot-rc
+  template:
+    metadata:
+      labels:
+        app: netshoot-rc
+    spec:
+      containers:
+      - name: netshoot-rc
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "infinity"]
+        ports:
+        - containerPort: 8080

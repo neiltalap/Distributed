@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ssd-monitor
+spec:
+  selector:
+    matchLabels:
+      # This label must match the label defined in the template metadata below.
+      app: ssd-monitor
+  # The blueprint for the Pods that will be created.
+  template:
+    metadata:
+      labels:
+        # The label attached to the Pods. This is used by the selector above.
+        app: ssd-monitor
+    spec:
+      # The scheduling filter.
+      nodeSelector:
+        # The Pod will only be scheduled on nodes that have this specific label.
+        disk: ssd
+      containers:
+      # The name of the container within the Pod.
+      - name: main
+        # The container image to run (from Docker Hub).
+        image: luksa/ssd-monitor

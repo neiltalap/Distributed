@@ -1,0 +1,62 @@
+# A JOB OBJECT
+#
+# a POD is a basic unit of execution, meaning the container running your code
+# a JOB on the other hand is a CONTROLLER, that manages pods
+# 
+# JOB: "I need this task done successfully 1 time. If the worker fails, 
+# I will hire a new one or tell the current one to try again."
+#
+# POD: "I am just running the script. If I crash, I check my 
+# restartPolicy to see if I should try again or quit."
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-example
+spec:
+  # --- CONCURRENCY & COMPLETION ---
+  # completions: How many times does this task need to succeed IN TOTAL 
+  # to be considered "done"?
+  completions: 1
+  
+  # parallelism: How many Pods can run AT THE SAME TIME?
+  # If you have 50 completions and 5 parallelism, K8s runs 5 workers 
+  # simultaneously until 50 successes are reached.
+  parallelism: 1
+
+  # --- CLEANUP ---
+  # By default, completed Jobs (and their Pods) stick around forever 
+  # so you can check their logs. This creates clutter.
+  # "ttlSecondsAfterFinished" automates cleanup X seconds after completion.
+  ttlSecondsAfterFinished: 10
+
+  # --- FAILURE MANAGEMENT ---
+  # backoffLimit: This is what actually prevents the Pod from restarting forever.
+  # If the Pod fails this many times, the Job controller marks the whole Job 
+  # as "Failed" and stops trying.
+  # Default: 6
+  backoffLimit: 6
+
+  template:
+    metadata:
+      labels:
+        app: batch-job
+    spec:
+      # --- RETRY STRATEGY ---
+      # "restartPolicy" controls how the Kubelet on the specific Node reacts to a crash.
+      # It MUST be 'OnFailure' or 'Never' (Job cannot use 'Always').
+      
+      # Option A: [OnFailure] 
+      # The container restarts inside the SAME Pod.
+      # Result: IP address stays the same. "RESTARTS" count increases.
+      # Use Case: Preferred for large images/AI models to avoid re-pulling/re-scheduling overhead.
+      
+      # Option B: [Never] 
+      # The Pod status becomes 'Failed'. The Job controller creates a NEW Pod.
+      # Result: You get a new Pod with a new name and new IP.
+      restartPolicy: OnFailure
+      
+      containers:
+      - name: main
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "10"]

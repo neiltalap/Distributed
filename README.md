@@ -8,3 +8,7 @@ A collection of Kubernetes manifests and Go application examples for learning di
 ## Workloads
 - **ReplicaSet**: Ensuring a specified number of pod replicas are running.
 - **DaemonSet**: Running a copy of a pod on all (or some) nodes.
+
+## Batch Processing
+- **Jobs**: Run to completion tasks.
+- **CronJobs**: Time-based job scheduling.

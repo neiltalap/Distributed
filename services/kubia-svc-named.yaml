@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exampleservice
+spec:
+  selector:
+    app: myapp
+  ports:
+  - name: http
+    port: 80
+    # this target the name of ports in the pod definition
+    # ports:
+    # - name: http 
+    # containerPort: 8080 
+    # - name: https 
+    # containerPort: 8443 
+    # a benefit to that is that you can change the port destination 
+    # later without changing the service
+    targetPort: http
+  - name: https
+    port: 443
+    targetPort: https

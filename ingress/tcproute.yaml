@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: my-database-route
+  namespace: database-ns
+spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: infra-ns # We must specify the namespace of the Gateway now
+      sectionName: tcp-listener
+  rules:
+    - backendRefs:
+        - name: my-postgres-service
+          port: 5432

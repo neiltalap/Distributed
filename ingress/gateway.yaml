@@ -1,0 +1,32 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: infra-ns # This lives in a protected 'ops' namespace
+spec:
+  gatewayClassName: nginx # Or 'gke-l7-global-external-managed', etc.
+  listeners:
+    # 1. HTTP Listener (Port 80)
+    # This listener allows routes from ANY namespace to attach to it.
+    - name: http-listener
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All # CRITICAL: This enables Cross-Namespace Routing
+        kinds:
+          - kind: HTTPRoute
+
+    # 2. TCP Listener (Port 5432)
+    # This listener is stricter. It only allows routes from the 'database' namespace.
+    - name: tcp-listener
+      port: 5432
+      protocol: TCP
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              team: database-admins
+        kinds:
+          - kind: TCPRoute

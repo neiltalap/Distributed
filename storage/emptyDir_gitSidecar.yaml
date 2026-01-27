@@ -1,0 +1,39 @@
+# gitRepo volume is actually deprecated in newer Kubernetes versions,
+# this is the modern, production-ready way to do it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: git-sync-sidecar-pod
+spec:
+  containers:
+    # Container 1: The Web Server (Consumer)
+    - image: nginx:alpine
+      name: web-server
+      volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+      ports:
+        - containerPort: 80
+      resource:
+
+    # Container 2: The Sidecar (Provider)
+    # This replaces the 'gitRepo' volume logic with an active container
+    - image: k8s.gcr.io/git-sync:v3.1.6
+      name: git-sync
+      volumeMounts:
+        - name: html
+          mountPath: /tmp/git
+      env:
+        - name: GIT_SYNC_REPO
+          value: "https://github.com/luksa/kubia-website-example.git"
+        - name: GIT_SYNC_BRANCH
+          value: "master"
+        - name: GIT_SYNC_WAIT
+          value: "10" # Pulls changes every 10 seconds
+        - name: GIT_SYNC_DEST
+          value: "html" # Syncs into a subfolder named 'html'
+
+  volumes:
+    - name: html
+      emptyDir: {} # Starts empty, filled by the sidecar

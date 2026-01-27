@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-auto-claim
+spec:
+  storageClassName: fast-ssd  # Requesting from the "fast-ssd" machine
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

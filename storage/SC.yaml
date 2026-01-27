@@ -1,0 +1,8 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd        # Name of the "Vending Machine"
+provisioner: kubernetes.io/gce-pd  # Which cloud plugin to use (AWS, Azure, GCE)
+parameters:
+  type: pd-ssd          # Specific cloud settings (e.g., SSD vs HDD)
+  zone: us-central1-a

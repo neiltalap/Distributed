@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: system-log-reader
+spec:
+  containers:
+    - image: busybox
+      name: log-reader
+      # Tries to read the host's syslog file
+      command: ["/bin/sh", "-c", "tail -f /var/log/syslog"]
+      volumeMounts:
+        - name: node-logs
+          mountPath: /var/log # Where the container sees the files
+          readOnly: true # Safety: Don't let the container delete host logs!
+      resource: # Just a placeholder for the linter
+  volumes:
+    - name: node-logs
+      hostPath:
+        path: /var/log # The actual directory on the Node

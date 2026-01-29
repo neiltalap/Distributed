@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: all-probes-demo
+spec:
+  containers:
+  - image: abzh423/nodeapp
+    name: nodeapp
+    
+    # ONLY NEEDED IF YOUR APPLICATION TAKES A VERY LONG
+    # TIME TO START. ONLY AND ONLY THEN
+    # (e.g., loading massive cache data, migrations, or legacy Java apps).
+    # -------------------------------------------------------------
+    # 1. STARTUP PROBE
+    # -------------------------------------------------------------
+    # This is critical for slow-starting legacy applications.
+    # It effectively pauses the Liveness and Readiness probes until
+    # this probe succeeds. This prevents the Liveness probe from 
+    # killing the container before it has finished initializing.
+    startupProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      # Allow the app 30 attempts to start up.
+      failureThreshold: 30
+      # Check every 10 seconds. (30 * 10 = 300s / 5 min total startup allowance)
+      periodSeconds: 10
+
+    # -------------------------------------------------------------
+    # 2. READINESS PROBE
+    # -------------------------------------------------------------
+    # Determines if the container is ready to accept network traffic.
+    # If this fails, the Pod is NOT restarted. Instead, it is 
+    # temporarily removed from all Service endpoints (Load Balancers).
+    # Traffic will not be sent here until this passes again.
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      # Wait 5 seconds after the startupProbe succeeds before checking.
+      initialDelaySeconds: 5
+      # Check frequently (every 5 seconds) to quickly cut off traffic if overloaded.
+      periodSeconds: 5
+
+    # -------------------------------------------------------------
+    # 3. LIVENESS PROBE
+    # -------------------------------------------------------------
+    # Determines if the application is alive or dead (deadlock/crash).
+    # If this fails, Kubernetes kills and restarts the container.
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      # Wait 15 seconds after the startupProbe succeeds.
+      initialDelaySeconds: 15
+      # If the app fails 3 times in a row, restart it.
+      failureThreshold: 3
+    
+    # Resources (Good practice to include limits)
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"

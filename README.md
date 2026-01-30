@@ -12,3 +12,8 @@ A collection of Kubernetes manifests and Go application examples for learning di
 ## Batch Processing
 - **Jobs**: Run to completion tasks.
 - **CronJobs**: Time-based job scheduling.
+
+## Networking & Storage
+- **Services**: Exposing applications.
+- **Ingress**: HTTP/HTTPS routing.
+- **Storage**: Persistent Volumes and Claims.

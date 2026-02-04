@@ -13,6 +13,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: job-example
+  labels:
+    app.kubernetes.io/name: batch-job
+    app.kubernetes.io/component: job
+    app.kubernetes.io/part-of: distributed-playground
 spec:
   # --- CONCURRENCY & COMPLETION ---
   # completions: How many times does this task need to succeed IN TOTAL 

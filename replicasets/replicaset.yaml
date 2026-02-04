@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
   name: rs-1
+  labels:
+    app.kubernetes.io/name: netshoot-rc
+    app.kubernetes.io/component: replicaset
+    app.kubernetes.io/part-of: distributed-playground
 spec:
   replicas: 3
   selector:

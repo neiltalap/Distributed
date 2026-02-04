@@ -2,6 +2,10 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: cronjob-example
+  labels:
+    app.kubernetes.io/name: netshoot
+    app.kubernetes.io/component: cronjob
+    app.kubernetes.io/part-of: distributed-playground
 spec:
   # running the job at 0 15 30 45 minutes of every hour, every day
   schedule: "0,15,30,45 * * * *"

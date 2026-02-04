@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: ssd-monitor
+  labels:
+    app.kubernetes.io/name: ssd-monitor
+    app.kubernetes.io/component: daemonset
+    app.kubernetes.io/part-of: distributed-playground
 spec:
   selector:
     matchLabels:
@@ -13,6 +17,9 @@ spec:
       labels:
         # The label attached to the Pods. This is used by the selector above.
         app: ssd-monitor
+        app.kubernetes.io/name: ssd-monitor
+        app.kubernetes.io/component: daemonset
+        app.kubernetes.io/part-of: distributed-playground
     spec:
       # The scheduling filter.
       nodeSelector:

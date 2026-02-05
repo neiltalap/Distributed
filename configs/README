@@ -1,0 +1,110 @@
+Configuration in Kubernetes
+
+This guide summarizes how to decouple configuration from your application logic 
+using ConfigMaps and Secrets.
+
+
+1. Decision Guide: What to use when?
+
+If you have a Simple Value (e.g., Log Level, Interval)
+
+    Recommended Approach: Environment Variable
+
+    Why: Simplest implementation; standard 12-factor app pattern.
+
+If you need to pass data to binary flags
+    
+    Recommended Approach: Command Line Args
+    
+    Why: Bypasses the shell; allows dynamic startup arguments based on K8s config.
+
+If you have a Complex Config File (e.g., nginx.conf)
+    
+    Recommended Approach: ConfigMap Volume
+    
+    Why: Keeps formatting intact; allows K8s to manage the file content.
+
+If you have Sensitive Data (Passwords, Keys)
+
+    Recommended Approach: Secret Volume
+
+    Why: Security. Secrets mounted as volumes stay in RAM (tmpfs) and are not written to node storage.
+
+If you need "Hot Reload"
+
+    Recommended Approach: ConfigMap or Secret Volume
+
+    Why: Volumes update automatically when the ConfigMap changes (Env vars require a pod restart).
+
+
+
+2. Important Concepts & Gotchas
+
+A. Atomic Updates (The Symlink Trick)
+
+When you mount a ConfigMap as a volume, Kubernetes ensures you don't see a "half-written" file during an update.
+
+    K8s writes the new data to a timestamped directory.
+
+    It updates a ..data symlink to point to that new directory.
+
+    The actual filenames are symlinks to ..data.
+
+Result: All files in the volume update instantly and simultaneously.
+
+
+B. The subPath Trap
+
+If you want to mount a single file into a directory without hiding the other files existing in that directory (e.g., putting one config file into /etc/), you use subPath.
+
+    Warning: Files mounted using subPath do NOT receive updates. If you edit the ConfigMap, the pod will keep the old version of the file until the pod is restarted.
+
+
+C. Nginx (and similar apps) won't auto-reload
+
+Even though K8s updates the file in the volume, most applications (like Nginx) read their config only once at startup.
+
+    Solution: You must signal the app to reload.
+    Bash
+
+    kubectl exec <pod-name> -c <container-name> -- nginx -s reload
+
+
+D. Private Docker Registries
+
+To pull images from a private registry (like a private Docker Hub repo):
+
+    Create a specific secret:
+    
+    ```bash 
+    kubectl create secret docker-registry my-secret --docker-username=... --docker-password=...
+    ```
+    
+    Reference it in your Pod YAML:
+    
+    ```YAML
+    spec:
+      imagePullSecrets:
+      - name: my-secret
+    ```
+
+
+E. Environment Variable Limitations
+
+    Naming: ConfigMap keys with dashes (e.g., foo-bar) are invalid as Environment Variables. If using envFrom, K8s will skip them.
+
+    Static: Env vars are injected at startup. If you update the ConfigMap, the Env Var inside the container will not change until the Pod is deleted and recreated.
+
+
+
+3. Security Note on Secrets
+
+While Secrets and ConfigMaps look similar in usage:
+
+    Secrets are Base64 encoded (allows binary data).
+
+    Secrets are stored encrypted in etcd (in modern K8s versions).
+
+    Secrets (when mounted as volumes) are written to tmpfs (RAM), ensuring sensitive data isn't left on the hard drive of the host node.
+
+    Avoid using Env Vars for Secrets if possible. Env vars can be accidentally exposed in crash logs or child processes. Volumes are safer.

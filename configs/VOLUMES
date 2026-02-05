@@ -1,0 +1,34 @@
+Deep Dive: ConfigMap and Secret Volumes
+
+When you use a ConfigMap or Secret as a volume, 
+you are asking Kubernetes to "project" data from 
+its internal database (etcd) into the filesystem 
+of your container. 
+
+This behaves differently than a standard disk mount.
+
+
+
+1. The "Directory Overwrite" Behavior (The Trap)
+When you mount a volume to a directory, 
+**Kubernetes takes over that entire directory.**
+
+**Scenario:**
+* Your image has a folder `/etc/nginx/conf.d/` containing `default.conf`.
+* You mount a ConfigMap volume to `/etc/nginx/conf.d/`.
+
+**Result:**
+* `default.conf` vanishes (it is hidden).
+* The directory now ONLY contains the files from your ConfigMap.
+
+**The Fix (`subPath`):**
+If you want to place *one* file into a directory 
+without wiping out its neighbors, you use `subPath`.
+
+```yaml
+volumeMounts:
+- name: config
+  mountPath: /etc/nginx/conf.d/my-custom.conf  # Path to the specific file
+  subPath: my-custom.conf                       # Key in the ConfigMap
+
+

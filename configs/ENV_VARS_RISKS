@@ -1,0 +1,56 @@
+Security: Why Environment Variables are Unsafe for Secrets
+
+While widely used, passing sensitive data (API keys, passwords) 
+via Environment Variables is considered an anti-pattern 
+in high-security Kubernetes environments.
+
+
+
+1. The "Leak by Logger" Problem
+
+When an application crashes, it often dumps its state to the 
+logs to help developers debug. This state often includes the environment.
+
+**Result:** 
+
+Your database password ends up in plain text in your 
+logging system (Splunk, Datadog, ELK), where 
+many developers have read access.
+
+This is sometimes fixed by trying to redact logs, but secrets almost
+always do make their way into the logs one way or another. It's a 
+human thing.
+
+
+
+
+2. The "Leak by Child Process" Problem
+In Linux, when a process starts a sub-process 
+(e.g., your app runs a shell script or a plugin), 
+that sub-process automatically inherits all environment variables.
+
+**Result:** 
+If you use a third-party library or tool 
+inside your container, it implicitly has access to all your secrets.
+
+
+
+
+3. The "Leak by Monitoring" Problem
+On many systems, commands like `ps` (process status) or 
+monitoring agents running on the node can inspect the 
+environment of running processes.
+
+**Result:** 
+A compromised monitoring tool or a user with access to 
+the node can read secrets simply by listing running processes.
+
+
+
+Recommendation
+Use **Secret Volumes**.
+* They exist only in memory (tmpfs).
+* They are files, so they are not automatically 
+inherited by child processes unless explicitly read.
+* They do not show up in crash dumps or process listings.
+

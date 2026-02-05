@@ -1,0 +1,32 @@
+The Symlink Trick (Atomic Updates)
+
+When you update a ConfigMap, Kubernetes needs to 
+update the files inside the running container. 
+It uses symbolic links to ensure the application 
+never sees a half-written or empty 
+file while the update is happening.
+
+
+The Problem
+
+If Kubernetes just opened `nginx.conf` and started 
+rewriting it, and Nginx tried to read the config at 
+that exact millisecond, Nginx might crash reading a corrupt file.
+
+
+The Solution: Symlinks
+
+If you look inside a mounted volume, you won't see simple files. 
+You will see a structure like this:
+
+For instance:
+1. The Visible File nginx.conf -> ..data/nginx.conf 
+(This is a permanent link. It never changes.)
+
+2. The Pivot (The Magic Switch) ..data -> ..2023_10_05_timestamp_ID 
+(This is the link Kubernetes flips during an update.)
+
+3. The Actual File ..2023_10_05_timestamp_ID/nginx.conf -> [RAW DATA ON DISK] 
+(This is the hidden folder where the real file lives.)
+
+..data is the symlink.

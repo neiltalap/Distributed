@@ -1,0 +1,32 @@
+The Lifecycle of a ConfigMap Entry
+
+Many beginners assume a "link" exists between 
+their local files and the cluster. There isn't one. 
+Here is the actual data flow.
+
+Local File -> YAML Snapshot
+
+When you run 
+`kubectl create configmap my-config --from-file=nginx.conf`, 
+Kubernetes performs a one-time copy.
+
+It effectively does this:
+1. Opens `nginx.conf` on your laptop.
+2. Reads the entire content as a string.
+3. Pastes that string into the `data` section of a YAML object.
+
+**The Result:**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  # Key = Original Filename
+  # Value = "Big ass value" (Content of the file)
+  nginx.conf: |
+    server {
+      listen 80;
+      ...
+    }

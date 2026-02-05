@@ -2,6 +2,10 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: mongodb-pv
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/component: pv
+    app.kubernetes.io/part-of: distributed-playground
 spec:
   capacity:
     storage: 1Gi

@@ -1,0 +1,36 @@
+Final Edge Cases & Trivia
+
+
+1. The "Ghost" Volume (Default Token)
+If you run `kubectl describe pod`, you will often 
+see a volume you never defined: `default-token-xxxxx`.
+
+* **What is it?** Kubernetes automatically creates 
+a Secret containing credentials (token, ca.crt) for the API server.
+
+* **Where is it?** Mounted at `/var/run/secrets/kubernetes.io/serviceaccount`.
+* **Can I stop it?** Yes. If your pod does not need to talk to the K8s API, 
+you can disable it in the Pod spec:
+    
+```yaml
+    spec:
+      automountServiceAccountToken: false
+```
+
+
+2. The Size Limit
+Secrets and ConfigMaps are **not** for big data.
+
+* Limit: **1MB**.
+* Reason: These objects are stored in etcd (the K8s brain), which is designed for small, fast updates, not file storage. If you try to create a ConfigMap larger than 1MB, the API server will reject it.
+
+
+3. The "Lazy" Way to Image Pull Secrets
+We discussed adding `imagePullSecrets` to every single 
+Pod YAML to use a private registry. That gets annoying.
+
+You can add the secret to your **ServiceAccount** instead.
+1.  Link the secret to the `default` ServiceAccount.
+2.  Any Pod creating using that account (which is all of them by default) 
+automatically gets the image pull credentials. You never have to 
+write `imagePullSecrets` in your Pod YAML again.

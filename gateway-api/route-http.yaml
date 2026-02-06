@@ -1,0 +1,38 @@
+# You can now modify the request before it hits your backend, using standard, portable YAML
+
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: header-injection-route
+spec:
+  parentRefs:
+    - name: my-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      filters:
+        # 1. Modify the Header
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: X-Internal-Source
+                value: "k8s-gateway"
+        # 2. Rewrite the Path (e.g. /api/v1/users -> /users)
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+        # 3. Shadowing. Copy of the production traffic gets sent here
+        # the response is discarded, that allows us to see
+        # and test apps before anything takes place
+        - type: RequestMirror
+          requestMirror:
+            backendRef:
+              name: v2-beta-service
+              port: 80
+      backendRefs:
+        - name: api-service
+          port: 8080

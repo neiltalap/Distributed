@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubia
+  labels:
+    app.kubernetes.io/name: kubia
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: distributed-playground
+  annotations:
+    # Common annotation to configure the specific controller (e.g., Nginx)
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  # REQUIRED in v1: explicitly point to the controller you want to use
+  # (replaces the old 'kubernetes.io/ingress.class' annotation)
+  ingressClassName: nginx
+  rules:
+    - host: kubia.example.com
+      http:
+        paths:
+          - path: /
+            # REQUIRED in v1: You must specify how the path matches.
+            # 'Prefix' matches everything under / (e.g., /app, /login)
+            # 'Exact' matches only exactly /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubia-nodeport
+                port:
+                  number: 80 # Syntax changed: explicit 'number' or 'name'
